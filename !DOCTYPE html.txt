@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DengueGuard SL</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid #1e293b;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #34d399;
+    }
+
+    header .badge {
+      font-size: 11px;
+      background: #064e3b;
+      color: #6ee7b7;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 580px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 1.25rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.85rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 9px 11px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f1f5f9;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus {
+      border-color: #34d399;
+    }
+
+    input::placeholder { color: #475569; }
+
+    select option { background: #1e293b; }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      background: #059669;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #047857; }
+    .btn:active { transform: scale(0.99); }
+
+    .error-msg {
+      font-size: 13px;
+      color: #f87171;
+      margin-top: 6px;
+      display: none;
+    }
+
+    /* Result panel */
+    .result-idle {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .risk-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .risk-pct {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .risk-badge {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .risk-bar-bg {
+      height: 8px;
+      background: #0f172a;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .risk-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .risk-description {
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .tips-section {
+      padding-top: 12px;
+      border-top: 1px solid #334155;
+    }
+
+    .tips-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .tips-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .tips-list li {
+      font-size: 13px;
+      color: #94a3b8;
+      padding-left: 14px;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .tips-list li::before {
+      content: "·";
+      position: absolute;
+      left: 0;
+      color: #475569;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    /* Risk level color themes */
+    .level-low    { color: #6ee7b7; }
+    .level-mod    { color: #fcd34d; }
+    .level-high   { color: #fb923c; }
+    .level-vhigh  { color: #f87171; }
+
+    .badge-low   { background: #064e3b; color: #6ee7b7; }
+    .badge-mod   { background: #422006; color: #fcd34d; }
+    .badge-high  { background: #431407; color: #fb923c; }
+    .badge-vhigh { background: #450a0a; color: #f87171; }
+
+    .bar-low   { background: #34d399; }
+    .bar-mod   { background: #fbbf24; }
+    .bar-high  { background: #f97316; }
+    .bar-vhigh { background: #ef4444; }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>DengueGuard SL</h1>
+    <span class="badge">Sri Lanka</span>
+  </header>
+
+  <main>
+
+    <!-- FORM CARD -->
+    <div class="card">
+      <div class="form-grid">
+
+        <div class="field full">
+          <label>District</label>
+          <select id="district">
+            <option value="">Select district</option>
+            <option>Colombo</option>
+            <option>Kandy</option>
+            <option>Galle</option>
+            <option>Kalutara</option>
+            <option>Kurunegala</option>
+            <option>Ratnapura</option>
+            <option>Matara</option>
+            <option>Negombo</option>
+            <option>Jaffna</option>
+            <option>Trincomalee</option>
+            <option>Badulla</option>
+            <option>Anuradhapura</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Temperature (°C)</label>
+          <input type="number" id="temperature" placeholder="e.g. 28" min="0" max="60" step="0.1"/>
+        </div>
+
+        <div class="field">
+          <label>Rainfall (mm)</label>
+          <input type="number" id="rainfall" placeholder="e.g. 120" min="0" step="1"/>
+        </div>
+
+        <div class="field">
+          <label>Humidity (%)</label>
+          <input type="number" id="humidity" placeholder="e.g. 80" min="0" max="100" step="1"/>
+        </div>
+
+        <div class="field">
+          <label>Recent Cases</label>
+          <input type="number" id="recentCases" placeholder="e.g. 10" min="0" step="1"/>
+        </div>
+
+        <div class="field">
+          <label>Standing Water (days)</label>
+          <input type="number" id="standingWater" placeholder="e.g. 3" min="0" step="1"/>
+        </div>
+
+        <div class="field full">
+          <label>Urbanization Level</label>
+          <select id="urbanization">
+            <option value="urban">Urban</option>
+            <option value="suburban">Suburban</option>
+            <option value="rural">Rural</option>
+          </select>
+        </div>
+
+        <div class="field full">
+          <button class="btn" onclick="predict()">Predict Risk</button>
+          <p class="error-msg" id="error-msg"></p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RESULT CARD -->
+    <div class="card" id="result-panel">
+      <p class="result-idle">Fill in the form and click "Predict Risk" to see the dengue risk assessment for your area.</p>
+    </div>
+
+  </main>
+
+  <script>
+    function getVal(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function getNum(id) {
+      const v = getVal(id);
+      return v === '' ? NaN : parseFloat(v);
+    }
+
+    function getInt(id) {
+      const v = getVal(id);
+      return v === '' ? 0 : parseInt(v, 10);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function clearError() {
+      const el = document.getElementById('error-msg');
+      el.textContent = '';
+      el.style.display = 'none';
+    }
+
+    function calcRisk(data) {
+      let score = 0;
+      const t = data.temperature;
+      const r = data.rainfall;
+      const h = data.humidity;
+
+      // Temperature scoring
+      if (t >= 25 && t <= 32) {
+        score += 3;
+      } else if ((t >= 23 && t < 25) || (t > 32 && t <= 34)) {
+        score += 2;
+      } else {
+        score += 1;
+      }
+
+      // Rainfall scoring
+      if (r >= 80 && r <= 200) {
+        score += 3;
+      } else if ((r >= 30 && r < 80) || (r > 200 && r <= 300)) {
+        score += 2;
+      } else {
+        score += 1;
+      }
+
+      // Humidity scoring
+      if (h >= 70 && h <= 90) {
+        score += 3;
+      } else if ((h >= 60 && h < 70) || (h > 90 && h <= 95)) {
+        score += 2;
+      } else {
+        score += 1;
+      }
+
+      // Standing water
+      if (data.standingWater >= 3) score += 2;
+      else if (data.standingWater >= 1) score += 1;
+
+      // Recent cases
+      if (data.recentCases >= 20) score += 3;
+      else if (data.recentCases >= 5) score += 2;
+      else if (data.recentCases > 0) score += 1;
+
+      // Urbanization
+      if (data.urbanization === 'urban') score += 1;
+
+      // Max possible score = 13
+      const prob = Math.min(0.98, Math.max(0.02, score / 13));
+
+      let level, levelClass, badgeClass, barClass, tips;
+
+      if (prob >= 0.75) {
+        level = 'Very High Risk';
+        levelClass = 'level-vhigh';
+        badgeClass = 'badge-vhigh';
+        barClass = 'bar-vhigh';
+        tips = [
+          'Eliminate all standing water immediately',
+          'Use mosquito repellent at all times',
+          'Visit a clinic if fever, rash, or joint pain develops',
+          'Report cases to the local health authority',
+          'Avoid outdoor activity at dawn and dusk'
+        ];
+      } else if (prob >= 0.55) {
+        level = 'High Risk';
+        levelClass = 'level-high';
+        badgeClass = 'badge-high';
+        barClass = 'bar-high';
+        tips = [
+          'Check and drain all stagnant water containers',
+          'Use bed nets and fit window screens',
+          'Wear long sleeves during peak mosquito hours',
+          'Monitor for fever and flu-like symptoms'
+        ];
+      } else if (prob >= 0.35) {
+        level = 'Moderate Risk';
+        levelClass = 'level-mod';
+        badgeClass = 'badge-mod';
+        barClass = 'bar-mod';
+        tips = [
+          'Monitor local health bulletins regularly',
+          'Keep gutters and drains clear of blockages',
+          'Use insect repellent when outdoors',
+          'Remove unused containers that collect water'
+        ];
+      } else {
+        level = 'Low Risk';
+        levelClass = 'level-low';
+        badgeClass = 'badge-low';
+        barClass = 'bar-low';
+        tips = [
+          'Maintain routine mosquito prevention measures',
+          'Keep surroundings clean and dry',
+          'Stay informed about dengue trends in your area'
+        ];
+      }
+
+      return { prob, level, levelClass, badgeClass, barClass, tips };
+    }
+
+    function predict() {
+      clearError();
+
+      const district      = getVal('district');
+      const temperature   = getNum('temperature');
+      const rainfall      = getNum('rainfall');
+      const humidity      = getNum('humidity');
+      const recentCases   = getInt('recentCases');
+      const standingWater = getInt('standingWater');
+      const urbanization  = getVal('urbanization');
+
+      // Validation
+      if (!district) {
+        showError('Please select a district.');
+        return;
+      }
+      if (isNaN(temperature)) {
+        showError('Please enter the temperature.');
+        return;
+      }
+      if (temperature < 0 || temperature > 60) {
+        showError('Temperature must be between 0 and 60 °C.');
+        return;
+      }
+      if (isNaN(rainfall)) {
+        showError('Please enter the rainfall amount.');
+        return;
+      }
+      if (rainfall < 0) {
+        showError('Rainfall cannot be negative.');
+        return;
+      }
+      if (isNaN(humidity)) {
+        showError('Please enter the humidity.');
+        return;
+      }
+      if (humidity < 0 || humidity > 100) {
+        showError('Humidity must be between 0 and 100%.');
+        return;
+      }
+
+      const result = calcRisk({ temperature, rainfall, humidity, recentCases, standingWater, urbanization });
+      const pct = Math.round(result.prob * 100);
+
+      const tipItems = result.tips.map(t => `<li>${t}</li>`).join('');
+
+      document.getElementById('result-panel').innerHTML = `
+        <div class="risk-header">
+          <span class="risk-pct ${result.levelClass}">${pct}%</span>
+          <span class="risk-badge ${result.badgeClass}">${result.level}</span>
+        </div>
+        <div class="risk-bar-bg">
+          <div class="risk-bar-fill ${result.barClass}" style="width: ${pct}%"></div>
+        </div>
+        <p class="risk-description">
+          Assessment for <strong>${district}</strong> based on the entered environmental
+          and epidemiological conditions.
+        </p>
+        <div class="tips-section">
+          <p class="tips-title">Recommended Actions</p>
+          <ul class="tips-list">${tipItems}</ul>
+        </div>
+      `;
+    }
+  </script>
+
+</body>
+</html>
