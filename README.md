@@ -1,6 +1,6 @@
 # DengueGuard SL
 
-A lightweight, browser-based dengue fever risk assessment tool for Sri Lanka. No server, no dependencies — just a single HTML file.
+A lightweight, browser-based dengue fever risk assessment tool for Sri Lanka. No server, no dependencies,just a single HTML file.
 
 ---
 
